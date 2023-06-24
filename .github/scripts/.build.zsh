@@ -37,6 +37,10 @@ build() {
   local project_root=${SCRIPT_HOME:A:h:h}
   local buildspec_file="${project_root}/buildspec.json"
 
+  if [[ ${host_os} == 'linux' ]] {
+    local distro="$(awk -F= '$1=="ID" { print $2 ;}' /etc/*-release)"
+  }
+
   trap '_trap_error' ZERR
 
   fpath=("${SCRIPT_HOME}/utils.zsh" ${fpath})

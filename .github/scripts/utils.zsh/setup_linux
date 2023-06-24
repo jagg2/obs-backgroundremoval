@@ -21,38 +21,90 @@ read -r QT_VERSION <<< \
 if (( ! (${skips[(Ie)all]} + ${skips[(Ie)deps]}) )) {
   log_info 'Installing obs build dependencies...'
 
-  sudo apt-get install -y \
-    build-essential \
-    libcurl4-openssl-dev \
-    libavcodec-dev libavdevice-dev libavfilter-dev libavformat-dev libavutil-dev \
-    libswresample-dev libswscale-dev \
-    libjansson-dev \
-    libx11-xcb-dev \
-    libgles2-mesa-dev \
-    libwayland-dev \
-    libpulse-dev
+  if [[ $(awk -F= '$1=="ID" { print $2 ;}' /etc/*-release) != 'fedora' ]] {
+     sudo apt-get install -y \
+      build-essential \
+      libcurl4-openssl-dev \
+      libavcodec-dev libavdevice-dev libavfilter-dev libavformat-dev libavutil-dev \
+      libswresample-dev libswscale-dev \
+      libjansson-dev \
+      libx11-xcb-dev \
+      libgles2-mesa-dev \
+      libwayland-dev \
+      libpulse-dev
 
-  local -a _qt_packages=()
+    local -a _qt_packages=()
 
-  if (( QT_VERSION == 5 )) {
-    _qt_packages+=(
-      qtbase5-dev
-      libqt5svg5-dev
-      qtbase5-private-dev
-      libqt5x11extras5-dev
-    )
-  } elif (( QT_VERSION == 6 )) {
-    _qt_packages+=(
-      qt6-base-dev
-      libqt6svg6-dev
-      qt6-base-private-dev
-    )
+    if (( QT_VERSION == 5 )) {
+      _qt_packages+=(
+        qtbase5-dev
+        libqt5svg5-dev
+        qtbase5-private-dev
+        libqt5x11extras5-dev
+      )
+    } elif (( QT_VERSION == 6 )) {
+      _qt_packages+=(
+        qt6-base-dev
+        libqt6svg6-dev
+        qt6-base-private-dev
+      )
+    } else {
+      log_error "Unsupported Qt version '${QT_VERSION}' specified."
+      return 2
+    }
+
+    sudo apt-get install -y ${_qt_packages}
+
   } else {
-    log_error "Unsupported Qt version '${QT_VERSION}' specified."
-    return 2
+    sudo dnf -y groupinstall "Development Tools" "Development Libraries"
+    sudo dnf install \
+       glib2-devel \
+       jansson-devel \
+       json-devel \
+       libavcodec-free \
+       libavcodec-free-devel \
+       libavdevice-free \
+       libavdevice-free-devel \
+       libcurl-devel \
+       libuuid-devel \
+       libX11-devel \
+       libXdamage \
+       libxkbcommon-devel \
+       pciutils-devel \
+       pipewire-devel \
+       pulseaudio-libs-devel \
+       systemd-devel \
+       wayland-devel \
+       websocketpp-devel \
+       x264-devel
+
+    local -a _qt_packages=()
+
+    if (( QT_VERSION == 5 )) {
+      _qt_packages+=(
+        qt5-qtbase-devel
+        qt5-qtsvg-devel
+        qt5-qtbase-private-devel
+        qt5-qtx11extras-devel
+        qt5-qtwayland-devel
+      )
+    } elif (( QT_VERSION == 6 )) {
+      _qt_packages+=(
+        qt6-qtbase-devel
+        qt6-qtsvg-devel
+        qt6-qtbase-private-devel
+        qt6-qtwayland-devel
+      )
+    } else {
+      log_error "Unsupported Qt version '${QT_VERSION}' specified."
+      return 2
+    }
+
+    sudo dnf -y install ${_qt_packages}
+
   }
 
-  sudo apt-get install -y ${_qt_packages}
+
 }
 
 local deps_version
